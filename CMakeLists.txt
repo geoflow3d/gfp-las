@@ -9,7 +9,7 @@ find_package(geoflow REQUIRED)
 find_package(LASlib)
 
 add_library(gfp_las MODULE
-  las_nodes.cpp
+  nodes.cpp
   plugin.cpp
 )
 target_link_libraries( gfp_las

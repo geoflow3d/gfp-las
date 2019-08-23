@@ -1,7 +1,7 @@
 #include <lasreader.hpp>
 #include <laswriter.hpp>
 
-#include "las_nodes.hpp"
+#include "nodes.hpp"
 
 namespace geoflow::nodes::las {
 
