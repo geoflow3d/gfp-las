@@ -30,19 +30,22 @@ void LASLoaderNode::process(){
       manager.data_offset = {lasreader->point.get_x(), lasreader->point.get_y(), lasreader->point.get_z()};
       found_offset = true;
     }
-    if (i++ % thin_nth == 0) {
-      classification.push_back(lasreader->point.get_classification());
-      intensity.push_back(float(lasreader->point.get_intensity()));
-      points.push_back({
-        float(lasreader->point.get_x() - (*manager.data_offset)[0]), 
-        float(lasreader->point.get_y() - (*manager.data_offset)[1]), 
-        float(lasreader->point.get_z() - (*manager.data_offset)[2])}
-      );
-      order.push_back(float(i)/1000);
+    // if (i++ % 1000000 == 0) {
+    //   std::cout << "Read " << i << " points...\n";
+    // }
+    if (thin_nth != 0) {
+      if (i % thin_nth != 0) {
+        continue;
+      }
     }
-    if (i % 1000000 == 0) {
-      std::cout << "Read " << i << " points...\n";
-    }
+    classification.push_back(lasreader->point.get_classification());
+    intensity.push_back(float(lasreader->point.get_intensity()));
+    points.push_back({
+      float(lasreader->point.get_x() - (*manager.data_offset)[0]), 
+      float(lasreader->point.get_y() - (*manager.data_offset)[1]), 
+      float(lasreader->point.get_z() - (*manager.data_offset)[2])}
+    );
+    order.push_back(float(i)/1000);
   }
   lasreader->close();
   delete lasreader;

@@ -16,9 +16,11 @@ target_link_libraries( gfp_las
   geoflow-core
   LASlib
 )
-set_target_properties(
-  gfp_las
+set_target_properties( gfp_las
   PROPERTIES CXX_STANDARD 17
+)
+target_compile_options( gfp_las PUBLIC
+  "$<$<CONFIG:RELEASE>:-O3>"
 )
 
 install(TARGETS gfp_las DESTINATION ${geoflow_PLUGIN_FOLDER})
