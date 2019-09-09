@@ -11,6 +11,7 @@ void LASLoaderNode::process(){
   vec1i classification;
   vec1f intensity;
   vec1f order;
+  vec3f colors;
 
   LASreadOpener lasreadopener;
   lasreadopener.set_file_name(filepath.c_str());
@@ -40,6 +41,11 @@ void LASLoaderNode::process(){
     }
     classification.push_back(lasreader->point.get_classification());
     intensity.push_back(float(lasreader->point.get_intensity()));
+    colors.push_back({
+      float(lasreader->point.get_R())/65535,
+      float(lasreader->point.get_G())/65535,
+      float(lasreader->point.get_B())/65535
+    });
     points.push_back({
       float(lasreader->point.get_x() - (*manager.data_offset)[0]), 
       float(lasreader->point.get_y() - (*manager.data_offset)[1]), 
@@ -51,6 +57,7 @@ void LASLoaderNode::process(){
   delete lasreader;
 
   output("points").set(points);
+  output("colors").set(colors);
   output("classification").set(classification);
   output("intensity").set(intensity);
   output("order").set(order);

@@ -12,6 +12,7 @@ namespace geoflow::nodes::las {
       add_output("classification", typeid(vec1i));
       add_output("intensity", typeid(vec1f));
       add_output("order", typeid(vec1f));
+      add_output("colors", typeid(vec3f));
 
       add_param("filepath", ParamPath(filepath, "File path"));
       add_param("thin_nth", ParamBoundedInt(thin_nth, 0, 100, "Thin factor"));
