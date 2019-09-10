@@ -5,6 +5,8 @@ namespace geoflow::nodes::las {
   class LASLoaderNode:public Node {
     std::string filepath = "";
     int thin_nth=5;
+    int filter_class = 6;
+    bool do_class_filter = true;
     public:
     using Node::Node;
     void init() {
@@ -16,20 +18,8 @@ namespace geoflow::nodes::las {
 
       add_param("filepath", ParamPath(filepath, "File path"));
       add_param("thin_nth", ParamBoundedInt(thin_nth, 0, 100, "Thin factor"));
-    }
-    void process();
-  };
-
-  class LASGroundLoaderNode:public Node {
-    std::string filepath = "";
-    int thin_nth=5;
-    public:
-    using Node::Node;
-    void init() {
-      add_output("points", typeid(PointCollection));
-
-      add_param("filepath", ParamPath(filepath, "File path"));
-      add_param("thin_nth", ParamBoundedInt(thin_nth, 0, 100, "Thin factor"));
+      add_param("filter_class", ParamBoundedInt(filter_class, 0, 100, "Filter class"));
+      add_param("do_filter", ParamBool(do_class_filter, "Do class filter"));
     }
     void process();
   };
