@@ -12,11 +12,15 @@ jobs:
     name: Build Windows
     runs-on: windows-latest
     steps:
-    - name: Install dependencies
+    - name: Install LASlib
       run: |
-        echo $env:VCPKG_INSTALLATION_ROOT
-        $env:VCPKG_DEFAULT_TRIPLET="x64-windows"
-        vcpkg install lastools
+        git clone https://github.com/Ylannl/LAStools.git
+        cd LAStools
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_INSTALL_PREFIX=C:\Software
+        cmake --build . --config Release --parallel 4
+        cmake --install .
     - name: Install Geoflow
       run: |
         Invoke-WebRequest https://github.com/geoflow3d/geoflow/releases/download/v0.1.0/Geoflow-0.1.0-win64.exe -OutFile geoflow-setup.exe
@@ -26,7 +30,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake .. -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows
+        cmake .. -DCMAKE_INSTALL_PREFIX=C:\Software
         cmake --build . --target gfp_las --parallel 4 --config Release
 #     - name: Install NSIS
 #       run: |
@@ -36,8 +40,8 @@ jobs:
 #       run: |
 #         cd build
 #         & "C:\Program Files\CMake\bin\cpack" -C Release --verbose
-#     - name: Upload nsis installer as artifact
-#       uses: actions/upload-artifact@master
-#       with:
-#         name: Geoflow-installer-win64
-#         path: build/Geoflow-0.1.0-win64.exe
+    - name: Create artifact
+      uses: actions/upload-artifact@master
+      with:
+        name: gfp-las-win64
+        path: build/Release/gfp_las.dll
