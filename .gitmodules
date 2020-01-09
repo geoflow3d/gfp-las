@@ -1,0 +1,3 @@
+[submodule "thirdparty/filesystem"]
+	path = thirdparty/filesystem
+	url = https://github.com/gulrak/filesystem.git

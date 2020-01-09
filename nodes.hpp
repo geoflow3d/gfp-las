@@ -24,6 +24,18 @@ namespace geoflow::nodes::las {
     void process();
   };
 
+  class LASVecLoaderNode:public Node {
+    std::string las_folder = "";
+    public:
+    using Node::Node;
+    void init() {
+      add_vector_output("point_clouds", typeid(PointCollection));
+
+      add_param("las_folder", ParamPath(las_folder, "Folder with LAS files"));
+    }
+    void process();
+  };
+
   class LASWriterNode:public Node {
     std::string filepath = "";
     public:

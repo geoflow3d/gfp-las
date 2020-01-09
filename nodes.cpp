@@ -1,7 +1,21 @@
 #include <lasreader.hpp>
 #include <laswriter.hpp>
 
+#include <iomanip>
+
 #include "nodes.hpp"
+
+#if defined(__cplusplus) && __cplusplus >= 201703L && defined(__has_include)
+  #if __has_include(<filesystem>)
+    #define GHC_USE_STD_FS
+    #include <filesystem>
+    namespace fs = std::filesystem;
+  #endif
+#endif
+#ifndef GHC_USE_STD_FS
+  #include <ghc/filesystem.hpp>
+  namespace fs = ghc::filesystem;
+#endif
 
 namespace geoflow::nodes::las {
 
@@ -67,6 +81,52 @@ void LASLoaderNode::process(){
   output("order").set(order);
 }
 
+void LASVecLoaderNode::process(){
+
+  auto& point_clouds = vector_output("point_clouds");
+
+  if(!fs::exists(las_folder)) {
+    return;
+  }
+  std::vector<std::string> lasfiles;
+  for(auto& p: fs::directory_iterator(las_folder)) {
+    auto ext = p.path().extension();
+    if (ext == ".las" || 
+        ext == ".LAS" || 
+        ext == ".laz" || 
+        ext == ".LAZ")
+    {
+      lasfiles.push_back(p.path().string());
+    }
+  }
+  std::sort(lasfiles.begin(), lasfiles.end());
+  bool found_offset = manager.data_offset.has_value();
+  for(auto& lasfile : lasfiles) {
+    LASreadOpener lasreadopener;
+    lasreadopener.set_file_name(lasfile.c_str());
+    LASreader* lasreader = lasreadopener.open();
+    if (!lasreader)
+      return;
+
+    size_t i=0;
+    PointCollection points;
+    while (lasreader->read_point()) {
+      if (!found_offset) {
+        manager.data_offset = {lasreader->point.get_x(), lasreader->point.get_y(), lasreader->point.get_z()};
+        found_offset = true;
+      }
+      points.push_back({
+        float(lasreader->point.get_x() - (*manager.data_offset)[0]), 
+        float(lasreader->point.get_y() - (*manager.data_offset)[1]), 
+        float(lasreader->point.get_z() - (*manager.data_offset)[2])}
+      );
+    }
+    lasreader->close();
+    delete lasreader;
+    point_clouds.push_back(points);
+  }
+}
+
 void write_point_cloud_collection(const PointCollection& point_cloud, std::string path, const std::array<double,3> offset) {
   LASwriteOpener laswriteopener;
   laswriteopener.set_file_name(path.c_str());
@@ -123,9 +183,11 @@ void LASVecWriterNode::process(){
   auto point_clouds = vector_input("point_clouds");
 
   for (size_t i=0; i<point_clouds.size(); ++i) {
+    std::stringstream filename;
+    filename << filepath << "." << std::setw(9) << std::setfill('0') <<i+1 << ".las";
     write_point_cloud_collection(
       point_clouds.get<PointCollection>(i), 
-      filepath+"." + std::to_string(i+1) + ".las", 
+      filename.str(), 
       *manager.data_offset
     );
   }
