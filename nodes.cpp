@@ -67,7 +67,7 @@ void LASLoaderNode::process(){
   output("order").set(order);
 }
 
-void LASWriterNode::write_point_cloud_collection(PointCollection& point_cloud, std::string path) {
+void write_point_cloud_collection(const PointCollection& point_cloud, std::string path, const std::array<double,3> offset) {
   LASwriteOpener laswriteopener;
   laswriteopener.set_file_name(path.c_str());
 
@@ -95,9 +95,9 @@ void LASWriterNode::write_point_cloud_collection(PointCollection& point_cloud, s
 
   size_t i=0;
   for (auto& p : point_cloud) {
-    laspoint.set_x(p[0] + (*manager.data_offset)[0]);
-    laspoint.set_y(p[1] + (*manager.data_offset)[1]);
-    laspoint.set_z(p[2] + (*manager.data_offset)[2]);
+    laspoint.set_x(p[0] + offset[0]);
+    laspoint.set_y(p[1] + offset[1]);
+    laspoint.set_z(p[2] + offset[2]);
 
     laswriter->write_point(&laspoint);
     laswriter->update_inventory(&laspoint);
@@ -114,18 +114,20 @@ void LASWriterNode::process(){
 
   auto input_geom = input("point_clouds");
 
-  if (input_geom.is_connected_type(typeid(PointCollection))) {
-    auto point_cloud = input_geom.get<PointCollection>();
-    write_point_cloud_collection(point_cloud, filepath);
+  auto point_cloud = input_geom.get<PointCollection>();
+  write_point_cloud_collection(point_cloud, filepath, *manager.data_offset);
+}
 
-  } else if (input_geom.is_connected_type(typeid(std::vector<PointCollection>))) {
-    auto point_clouds = input_geom.get< std::vector<PointCollection> >();
+void LASVecWriterNode::process(){
 
-    int i=0;
-    for (auto point_cloud : point_clouds) {
-      filepath += "." + std::to_string(i++) + ".las";
-      write_point_cloud_collection(point_cloud, filepath);
-    }
+  auto point_clouds = vector_input("point_clouds");
+
+  for (size_t i=0; i<point_clouds.size(); ++i) {
+    write_point_cloud_collection(
+      point_clouds.get<PointCollection>(i), 
+      filepath+"." + std::to_string(i+1) + ".las", 
+      *manager.data_offset
+    );
   }
 }
 

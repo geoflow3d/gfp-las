@@ -29,13 +29,26 @@ namespace geoflow::nodes::las {
     public:
     using Node::Node;
     void init() {
-      add_input("point_clouds", {typeid(PointCollection), typeid(std::vector<PointCollection>)});
-      add_output("classification", typeid(vec1i));
-      add_output("intensity", typeid(vec1f));
+      add_input("point_clouds", {typeid(PointCollection)});
+      // add_output("classification", typeid(vec1i));
+      // add_output("intensity", typeid(vec1f));
       
       add_param("filepath", ParamPath(filepath, "File path"));
     }
-    void write_point_cloud_collection(PointCollection& point_cloud, std::string path);
+    void process();
+  };
+
+  class LASVecWriterNode:public Node {
+    std::string filepath = "";
+    public:
+    using Node::Node;
+    void init() {
+      add_vector_input("point_clouds", {typeid(PointCollection)});
+      // add_output("classification", typeid(vec1i));
+      // add_output("intensity", typeid(vec1f));
+      
+      add_param("filepath", ParamPath(filepath, "File path with stem"));
+    }
     void process();
   };
 
