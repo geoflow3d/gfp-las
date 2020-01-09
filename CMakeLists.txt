@@ -4,7 +4,7 @@ project (io-las VERSION 0.0.1)
 find_package(geoflow REQUIRED)
 
 # LASlib
-find_package(LASlib)
+find_package(LASlib REQUIRED)
 
 set(GF_PLUGIN_NAME ${PROJECT_NAME})
 set(GF_PLUGIN_TARGET_NAME "gfp_las")
@@ -12,7 +12,7 @@ set(GF_PLUGIN_REGISTER ${PROJECT_SOURCE_DIR}/register.hpp)
 geoflow_create_plugin(
   nodes.cpp
 )
-target_link_libraries( gfp_las
+target_link_libraries( gfp_las PRIVATE
   geoflow-core
   LASlib
 )
