@@ -16,7 +16,7 @@ jobs:
       run: |
         git clone https://github.com/LAStools/LAStools.git
         cd LAStools
-        git checkout 29469a9f5fb1e9a6d0176ebaedcbcc474c5716f5
+        git checkout 653d341833aa2a0b327c20eacee02523faabe255
         mkdir build
         cd build
         cmake .. -DCMAKE_INSTALL_PREFIX=C:\Software
