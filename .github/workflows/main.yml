@@ -14,7 +14,7 @@ jobs:
     steps:
     - name: Install LASlib
       run: |
-        git clone https://github.com/Ylannl/LAStools.git
+        git clone https://github.com/LAStools/LAStools.git
         cd LAStools
         mkdir build
         cd build
