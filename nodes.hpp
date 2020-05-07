@@ -16,10 +16,10 @@ namespace geoflow::nodes::las {
       add_output("order", typeid(vec1f));
       add_output("colors", typeid(vec3f));
 
-      add_param("filepath", ParamPath(filepath, "File path"));
-      add_param("thin_nth", ParamBoundedInt(thin_nth, 0, 100, "Thin factor"));
-      add_param("filter_class", ParamBoundedInt(filter_class, 0, 100, "Filter class"));
-      add_param("do_filter", ParamBool(do_class_filter, "Do class filter"));
+      add_param(ParamPath(filepath, "filepath", "File path"));
+      add_param(ParamBoundedInt(thin_nth, 0, 100, "thin_nth", "Thin factor"));
+      add_param(ParamBoundedInt(filter_class, 0, 100, "filter_class", "Filter class"));
+      add_param(ParamBool(do_class_filter, "do_filter", "Do class filter"));
     }
     void process();
   };
@@ -31,7 +31,7 @@ namespace geoflow::nodes::las {
     void init() {
       add_vector_output("point_clouds", typeid(PointCollection));
 
-      add_param("las_folder", ParamPath(las_folder, "Folder with LAS files"));
+      add_param(ParamPath(las_folder, "las_folder", "Folder with LAS files"));
     }
     void process();
   };
@@ -45,7 +45,7 @@ namespace geoflow::nodes::las {
       // add_output("classification", typeid(vec1i));
       // add_output("intensity", typeid(vec1f));
       
-      add_param("filepath", ParamPath(filepath, "File path"));
+      add_param(ParamPath(filepath, "filepath", "File path"));
     }
     void process();
   };
@@ -59,7 +59,7 @@ namespace geoflow::nodes::las {
       // add_output("classification", typeid(vec1i));
       // add_output("intensity", typeid(vec1f));
       
-      add_param("filepath", ParamPath(filepath, "File path with stem"));
+      add_param(ParamPath(filepath, "filepath", "File path with stem"));
     }
     void process();
   };
