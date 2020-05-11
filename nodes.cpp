@@ -28,7 +28,7 @@ void LASLoaderNode::process(){
   vec3f colors;
 
   LASreadOpener lasreadopener;
-  lasreadopener.set_file_name(filepath.c_str());
+  lasreadopener.set_file_name(manager.substitute_globals(filepath).c_str());
   LASreader* lasreader = lasreadopener.open();
   if (!lasreader)
     return;
@@ -175,7 +175,7 @@ void LASWriterNode::process(){
   auto input_geom = input("point_clouds");
 
   auto point_cloud = input_geom.get<PointCollection>();
-  write_point_cloud_collection(point_cloud, filepath, *manager.data_offset);
+  write_point_cloud_collection(point_cloud, manager.substitute_globals(filepath), *manager.data_offset);
 }
 
 void LASVecWriterNode::process(){
