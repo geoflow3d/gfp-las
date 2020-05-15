@@ -19,6 +19,19 @@
 
 namespace geoflow::nodes::las {
 
+std::vector<std::string> split_string(const std::string& s, std::string delimiter) {
+  std::vector<std::string> parts;
+  size_t last = 0;
+  size_t next = 0;
+
+  while ((next = s.find(delimiter, last)) != std::string::npos) {
+    parts.push_back(s.substr(last, next-last));
+    last = next + 1;
+  }
+  parts.push_back(s.substr(last));
+  return parts;
+}
+
 void LASLoaderNode::process(){
 
   PointCollection points;
@@ -85,20 +98,30 @@ void LASVecLoaderNode::process(){
 
   auto& point_clouds = vector_output("point_clouds");
 
-  if(!fs::exists(las_folder)) {
-    return;
-  }
   std::vector<std::string> lasfiles;
-  for(auto& p: fs::directory_iterator(las_folder)) {
-    auto ext = p.path().extension();
-    if (ext == ".las" || 
-        ext == ".LAS" || 
-        ext == ".laz" || 
-        ext == ".LAZ")
+  if(fs::is_directory(manager.substitute_globals(filepaths))) {
+    if(!fs::exists(manager.substitute_globals(filepaths))) {
+      return;
+    }
+    for(auto& p: fs::directory_iterator(manager.substitute_globals(filepaths))) {
+      auto ext = p.path().extension();
+      if (ext == ".las" ||
+          ext == ".LAS" ||
+          ext == ".laz" ||
+          ext == ".LAZ")
+      {
+        lasfiles.push_back(p.path().string());
+      }
+    }
+  } else {
+    std::cout << "las_filepaths is not a directory, assuming a list of LAS files" << std::endl;
+    for (std::string filepath : split_string(manager.substitute_globals(filepaths), " "))
     {
-      lasfiles.push_back(p.path().string());
+      if (fs::exists(filepath)) lasfiles.push_back(filepath);
+      else std::cout << filepath << " does not exist" << std::endl;
     }
   }
+
   std::sort(lasfiles.begin(), lasfiles.end());
   bool found_offset = manager.data_offset.has_value();
   for(auto& lasfile : lasfiles) {
