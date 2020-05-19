@@ -138,6 +138,14 @@ void LASVecLoaderNode::process(){
         manager.data_offset = {lasreader->point.get_x(), lasreader->point.get_y(), lasreader->point.get_z()};
         found_offset = true;
       }
+      if (do_class_filter && lasreader->point.get_classification() != filter_class) {
+        continue;
+      }
+      if (thin_nth != 0) {
+        if (i % thin_nth != 0) {
+          continue;
+        }
+      }
       points.push_back({
         float(lasreader->point.get_x() - (*manager.data_offset)[0]), 
         float(lasreader->point.get_y() - (*manager.data_offset)[1]), 
