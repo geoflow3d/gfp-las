@@ -25,13 +25,21 @@ namespace geoflow::nodes::las {
   };
 
   class LASVecLoaderNode:public Node {
-    std::string las_folder = "";
+    std::string filepaths = "";
+    int thin_nth=5;
+    int filter_class = 6;
+    bool do_class_filter = true;
+    bool merge_output = false;
     public:
     using Node::Node;
     void init() {
       add_vector_output("point_clouds", typeid(PointCollection));
 
-      add_param(ParamPath(las_folder, "las_folder", "Folder with LAS files"));
+      add_param(ParamPath(filepaths, "las_filepaths", "Folder with LAS files, OR a space separated list of LAS files"));
+      add_param(ParamBoundedInt(thin_nth, 0, 100, "thin_nth", "Thin factor"));
+      add_param(ParamBoundedInt(filter_class, 0, 100, "filter_class", "Filter class"));
+      add_param(ParamBool(do_class_filter, "do_filter", "Do class filter"));
+      add_param(ParamBool(merge_output, "merge_output", "Merge the input files into a single output. If true, the output vector will have only a single element which is the merged point cloud."));
     }
     void process();
   };

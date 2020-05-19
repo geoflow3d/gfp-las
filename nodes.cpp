@@ -19,6 +19,19 @@
 
 namespace geoflow::nodes::las {
 
+std::vector<std::string> split_string(const std::string& s, std::string delimiter) {
+  std::vector<std::string> parts;
+  size_t last = 0;
+  size_t next = 0;
+
+  while ((next = s.find(delimiter, last)) != std::string::npos) {
+    parts.push_back(s.substr(last, next-last));
+    last = next + 1;
+  }
+  parts.push_back(s.substr(last));
+  return parts;
+}
+
 void LASLoaderNode::process(){
 
   PointCollection points;
@@ -85,22 +98,33 @@ void LASVecLoaderNode::process(){
 
   auto& point_clouds = vector_output("point_clouds");
 
-  if(!fs::exists(las_folder)) {
-    return;
-  }
   std::vector<std::string> lasfiles;
-  for(auto& p: fs::directory_iterator(las_folder)) {
-    auto ext = p.path().extension();
-    if (ext == ".las" || 
-        ext == ".LAS" || 
-        ext == ".laz" || 
-        ext == ".LAZ")
+  if(fs::is_directory(manager.substitute_globals(filepaths))) {
+    if(!fs::exists(manager.substitute_globals(filepaths))) {
+      return;
+    }
+    for(auto& p: fs::directory_iterator(manager.substitute_globals(filepaths))) {
+      auto ext = p.path().extension();
+      if (ext == ".las" ||
+          ext == ".LAS" ||
+          ext == ".laz" ||
+          ext == ".LAZ")
+      {
+        lasfiles.push_back(p.path().string());
+      }
+    }
+  } else {
+    std::cout << "las_filepaths is not a directory, assuming a list of LAS files" << std::endl;
+    for (std::string filepath : split_string(manager.substitute_globals(filepaths), " "))
     {
-      lasfiles.push_back(p.path().string());
+      if (fs::exists(filepath)) lasfiles.push_back(filepath);
+      else std::cout << filepath << " does not exist" << std::endl;
     }
   }
+
   std::sort(lasfiles.begin(), lasfiles.end());
   bool found_offset = manager.data_offset.has_value();
+  PointCollection points;
   for(auto& lasfile : lasfiles) {
     LASreadOpener lasreadopener;
     lasreadopener.set_file_name(lasfile.c_str());
@@ -109,11 +133,18 @@ void LASVecLoaderNode::process(){
       return;
 
     size_t i=0;
-    PointCollection points;
     while (lasreader->read_point()) {
       if (!found_offset) {
         manager.data_offset = {lasreader->point.get_x(), lasreader->point.get_y(), lasreader->point.get_z()};
         found_offset = true;
+      }
+      if (do_class_filter && lasreader->point.get_classification() != filter_class) {
+        continue;
+      }
+      if (thin_nth != 0) {
+        if (i % thin_nth != 0) {
+          continue;
+        }
       }
       points.push_back({
         float(lasreader->point.get_x() - (*manager.data_offset)[0]), 
@@ -123,8 +154,12 @@ void LASVecLoaderNode::process(){
     }
     lasreader->close();
     delete lasreader;
-    point_clouds.push_back(points);
+    if (!merge_output) {
+      point_clouds.push_back(points);
+      points.clear();
+    }
   }
+  if (merge_output) point_clouds.push_back(points);
 }
 
 void write_point_cloud_collection(const PointCollection& point_cloud, std::string path, const std::array<double,3> offset) {
