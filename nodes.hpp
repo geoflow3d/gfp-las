@@ -29,6 +29,7 @@ namespace geoflow::nodes::las {
     int thin_nth=5;
     int filter_class = 6;
     bool do_class_filter = true;
+    bool merge_output = false;
     public:
     using Node::Node;
     void init() {
@@ -38,6 +39,7 @@ namespace geoflow::nodes::las {
       add_param(ParamBoundedInt(thin_nth, 0, 100, "thin_nth", "Thin factor"));
       add_param(ParamBoundedInt(filter_class, 0, 100, "filter_class", "Filter class"));
       add_param(ParamBool(do_class_filter, "do_filter", "Do class filter"));
+      add_param(ParamBool(merge_output, "merge_output", "Merge the input files into a single output. If true, the output vector will have only a single element which is the merged point cloud."));
     }
     void process();
   };

@@ -124,6 +124,7 @@ void LASVecLoaderNode::process(){
 
   std::sort(lasfiles.begin(), lasfiles.end());
   bool found_offset = manager.data_offset.has_value();
+  PointCollection points;
   for(auto& lasfile : lasfiles) {
     LASreadOpener lasreadopener;
     lasreadopener.set_file_name(lasfile.c_str());
@@ -132,7 +133,6 @@ void LASVecLoaderNode::process(){
       return;
 
     size_t i=0;
-    PointCollection points;
     while (lasreader->read_point()) {
       if (!found_offset) {
         manager.data_offset = {lasreader->point.get_x(), lasreader->point.get_y(), lasreader->point.get_z()};
@@ -154,8 +154,12 @@ void LASVecLoaderNode::process(){
     }
     lasreader->close();
     delete lasreader;
-    point_clouds.push_back(points);
+    if (!merge_output) {
+      point_clouds.push_back(points);
+      points.clear();
+    }
   }
+  if (merge_output) point_clouds.push_back(points);
 }
 
 void write_point_cloud_collection(const PointCollection& point_cloud, std::string path, const std::array<double,3> offset) {
