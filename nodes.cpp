@@ -210,7 +210,11 @@ void LASWriterNode::process(){
   auto input_geom = input("point_clouds");
 
   auto point_cloud = input_geom.get<PointCollection>();
-  write_point_cloud_collection(point_cloud, manager.substitute_globals(filepath), *manager.data_offset);
+
+  auto fname = manager.substitute_globals(filepath);
+  
+  fs::create_directories(fs::path(fname).parent_path());
+  write_point_cloud_collection(point_cloud, fname, *manager.data_offset);
 }
 
 void LASVecWriterNode::process(){
