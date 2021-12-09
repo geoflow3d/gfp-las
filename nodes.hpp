@@ -46,13 +46,16 @@ namespace geoflow::nodes::las {
 
   class LASWriterNode:public Node {
     std::string filepath = "";
+    std::string attribute_name = "identificatie";
     public:
     using Node::Node;
     void init() {
       add_input("point_clouds", {typeid(PointCollection)});
       // add_output("classification", typeid(vec1i));
       // add_output("intensity", typeid(vec1f));
-      
+      add_poly_input("attributes", {typeid(bool), typeid(int), typeid(float), typeid(std::string), typeid(Date), typeid(Time), typeid(DateTime)});
+
+      add_param(ParamString(attribute_name, "attribute_name", "attribute to use as filename. Has to be a string attribute."));
       add_param(ParamPath(filepath, "filepath", "File path"));
     }
     void process();

@@ -208,10 +208,25 @@ void write_point_cloud_collection(const PointCollection& point_cloud, std::strin
 void LASWriterNode::process(){
 
   auto input_geom = input("point_clouds");
-
   auto point_cloud = input_geom.get<PointCollection>();
 
+  // get attributevalue for filename
+  const gfSingleFeatureOutputTerminal* id_term;
+  auto id_attr_name = manager.substitute_globals(attribute_name);
+  bool use_id_from_attribute = false;
+  for (auto& term : poly_input("attributes").sub_terminals()) {
+    if ( term->get_name() == id_attr_name && term->accepts_type(typeid(std::string)) ) {
+      id_term = term;
+      use_id_from_attribute = true;
+    }
+  }
+
   auto fname = manager.substitute_globals(filepath);
+  if (use_id_from_attribute) {
+    auto new_file_path = fs::path(fname).parent_path() / id_term->get<const std::string>();
+    new_file_path += fs::path(fname).extension();
+    fname = new_file_path.string();
+  }
   
   fs::create_directories(fs::path(fname).parent_path());
   write_point_cloud_collection(point_cloud, fname, *manager.data_offset);
