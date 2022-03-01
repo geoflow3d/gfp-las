@@ -34,4 +34,10 @@ target_compile_options( gfp_las PUBLIC
 )
 if(MSVC)
   add_definitions(-DNOMINMAX)
+
+  # collect dll's required for runtime
+  INSTALL(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/Release/ DESTINATION bin
+    FILES_MATCHING 
+    PATTERN "*.dll"
+    PATTERN "gfp*" EXCLUDE)
 endif()
