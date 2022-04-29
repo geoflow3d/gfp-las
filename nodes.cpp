@@ -35,10 +35,11 @@ std::vector<std::string> split_string(const std::string& s, std::string delimite
 void LASLoaderNode::process(){
 
   PointCollection points;
-  vec1i classification;
-  vec1f intensity;
-  vec1f order;
-  vec3f colors;
+  auto& classification = points.add_attribute_vec1i("classification");
+  auto& intensity = points.add_attribute_vec1f("intensity");
+  auto& colors = points.add_attribute_vec3f("colors");
+  auto& order = points.add_attribute_vec1i("order");
+
 
   LASreadOpener lasreadopener;
   lasreadopener.set_file_name(manager.substitute_globals(filepath).c_str());
@@ -85,13 +86,9 @@ void LASLoaderNode::process(){
     order.push_back(float(i)/1000);
   }
   lasreader->close();
-  delete lasreader;
+  delete lasreader;  
 
   output("points").set(points);
-  output("colors").set(colors);
-  output("classification").set(classification);
-  output("intensity").set(intensity);
-  output("order").set(order);
 }
 
 void LASVecLoaderNode::process(){
@@ -188,11 +185,37 @@ void write_point_cloud_collection(const PointCollection& point_cloud, std::strin
 
   // bool found_offset = manager.data_offset.has_value();
 
+  auto classification = point_cloud.get_attribute_vec1i("classification");
+  auto intensity = point_cloud.get_attribute_vec1f("intensity");
+  auto colors = point_cloud.get_attribute_vec3f("colors");
+
+  // todo throw warnings
+  if (classification->size() != point_cloud.size()) {
+    classification = nullptr;
+  }
+  if (intensity->size() != point_cloud.size()) {
+    intensity = nullptr;
+  }
+  if (colors->size() != point_cloud.size()) {
+    colors = nullptr;
+  }
+
   size_t i=0;
   for (auto& p : point_cloud) {
     laspoint.set_x(p[0] + offset[0]);
     laspoint.set_y(p[1] + offset[1]);
     laspoint.set_z(p[2] + offset[2]);
+    if (classification) {
+      laspoint.set_classification((*classification)[i]);
+    }
+    if (intensity) {
+      laspoint.set_intensity((*intensity)[i]);
+    }
+    if (colors) {
+      laspoint.set_R((*colors)[i][0] * 65535);
+      laspoint.set_G((*colors)[i][1] * 65535);
+      laspoint.set_B((*colors)[i][2] * 65535);
+    }
 
     laswriter->write_point(&laspoint);
     laswriter->update_inventory(&laspoint);
