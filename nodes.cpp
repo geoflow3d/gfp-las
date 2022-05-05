@@ -190,14 +190,20 @@ void write_point_cloud_collection(const PointCollection& point_cloud, std::strin
   auto colors = point_cloud.get_attribute_vec3f("colors");
 
   // todo throw warnings
-  if (classification->size() != point_cloud.size()) {
-    classification = nullptr;
+  if (classification) {
+    if (classification->size() != point_cloud.size()) {
+      classification = nullptr;
+    }
   }
-  if (intensity->size() != point_cloud.size()) {
-    intensity = nullptr;
+  if (intensity) {
+    if (intensity->size() != point_cloud.size()) {
+      intensity = nullptr;
+    }
   }
-  if (colors->size() != point_cloud.size()) {
-    colors = nullptr;
+  if (colors) {
+    if (colors->size() != point_cloud.size()) {
+      colors = nullptr;
+    }
   }
 
   size_t i=0;
@@ -245,11 +251,7 @@ void LASWriterNode::process(){
   }
 
   auto fname = manager.substitute_globals(filepath);
-  if (use_id_from_attribute) {
-    auto new_file_path = fs::path(fname).parent_path() / id_term->get<const std::string>();
-    new_file_path += fs::path(fname).extension();
-    fname = new_file_path.string();
-  }
+  fname = substitute_from_term(fname, poly_input("attributes"));
   
   fs::create_directories(fs::path(fname).parent_path());
   write_point_cloud_collection(point_cloud, fname, *manager.data_offset);
