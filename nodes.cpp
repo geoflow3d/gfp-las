@@ -241,17 +241,8 @@ void LASWriterNode::process(){
 
   // get attributevalue for filename
   const gfSingleFeatureOutputTerminal* id_term;
-  auto id_attr_name = manager.substitute_globals(attribute_name);
-  bool use_id_from_attribute = false;
-  for (auto& term : poly_input("attributes").sub_terminals()) {
-    if ( term->get_name() == id_attr_name && term->accepts_type(typeid(std::string)) ) {
-      id_term = term;
-      use_id_from_attribute = true;
-    }
-  }
 
   auto fname = manager.substitute_globals(filepath);
-  fname = substitute_from_term(fname, poly_input("attributes"));
   
   fs::create_directories(fs::path(fname).parent_path());
   write_point_cloud_collection(point_cloud, fname, *manager.data_offset);
@@ -271,5 +262,61 @@ void LASVecWriterNode::process(){
     );
   }
 }
+
+void PointCloudClassSplitNode::process(){
+
+  auto& point_cloud = vector_input("point_cloud").get<PointCollection>();
+
+  auto classification = point_cloud.get_attribute_vec1i("classification");
+  // auto intensity = point_cloud.get_attribute_vec1f("intensity");
+  // auto colors = point_cloud.get_attribute_vec3f("colors");
+
+  // todo throw warnings
+  if (classification) {
+    if (classification->size() != point_cloud.size()) {
+      classification = nullptr;
+    }
+  }
+  if (!classification) return;
+
+  PointCollection cloud_A, cloud_B, cloud_C, cloud_D;
+
+  for (size_t i=0; i<point_cloud.size(); ++i) {
+    
+    if( class_A_ == (*classification)[i] ) {
+      cloud_A.push_back(point_cloud[i]);
+    } else if( class_B_ == (*classification)[i] ) {
+        cloud_B.push_back(point_cloud[i]);
+    } else if( class_C_ == (*classification)[i] ) {
+        cloud_C.push_back(point_cloud[i]);
+    } else if( class_D_ == (*classification)[i] ) {
+        cloud_D.push_back(point_cloud[i]);
+    }
+
+  }
+
+  output("A").set(cloud_A);
+  output("B").set(cloud_B);
+  output("C").set(cloud_C);
+  output("D").set(cloud_D);
+}
+
+// void PointCloudStatsCalcNode::process(float& ground_percentile) {
+//   // Compute average elevation per polygon
+//   std::cout <<"Computing the average elevation per polygon..." << std::endl;
+//     auto& gpt = input("point_cloud").get<PointCollection&>();
+//     float ground_ele = min_ground_elevation;
+//     if (gpt.size()!=0) {
+//       std::sort(gpt.begin(), gpt.end(), [](auto& p1, auto& p2) {
+//         return p1[2] < p2[2];
+//       });
+//       int elevation_id = std::floor(percentile_*float(gpt.size()-1));
+//       ground_ele = gpt[elevation_id][2];
+//     } else {
+//       std::cout << "no ground pts found for polygon\n";
+//     }
+//     // Assign the median ground elevation to each polygon
+//     ground_elevations.push_back(ground_ele);
+// }
 
 }

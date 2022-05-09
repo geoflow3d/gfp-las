@@ -46,16 +46,14 @@ namespace geoflow::nodes::las {
 
   class LASWriterNode:public Node {
     std::string filepath = "";
-    std::string attribute_name = "identificatie";
     public:
     using Node::Node;
     void init() {
       add_input("point_clouds", {typeid(PointCollection)});
       // add_output("classification", typeid(vec1i));
       // add_output("intensity", typeid(vec1f));
-      add_poly_input("attributes", {typeid(bool), typeid(int), typeid(float), typeid(std::string), typeid(Date), typeid(Time), typeid(DateTime)});
+      // add_poly_input("attributes", {typeid(bool), typeid(int), typeid(float), typeid(std::string), typeid(Date), typeid(Time), typeid(DateTime)});
 
-      add_param(ParamString(attribute_name, "attribute_name", "attribute to use as filename. Has to be a string attribute."));
       add_param(ParamPath(filepath, "filepath", "File path"));
     }
     void process();
@@ -74,5 +72,42 @@ namespace geoflow::nodes::las {
     }
     void process();
   };
+
+  class PointCloudClassSplitNode:public Node {
+    int class_A_ = 2;
+    int class_B_ = 6;
+    int class_C_ = 0;
+    int class_D_ = 1;
+    public:
+    using Node::Node;
+    void init() {
+      add_input("point_cloud", {typeid(PointCollection)});
+      add_output("A", typeid(PointCollection));
+      add_output("B", typeid(PointCollection));
+      add_output("C", typeid(PointCollection));
+      add_output("D", typeid(PointCollection));
+      // add_output("intensity", typeid(vec1f));
+      
+      add_param(ParamInt(class_A_, "class A", "Classification code for output A"));
+      add_param(ParamInt(class_B_, "class B", "Classification code for output A"));
+      add_param(ParamInt(class_C_, "class C", "Classification code for output A"));
+      add_param(ParamInt(class_D_, "class D", "Classification code for output A"));
+    }
+    void process();
+  };
+
+  // class PointCloudStatsCalcNode:public Node {
+  //   float percentile_=0.05;
+
+  //   public:
+  //   using Node::Node;
+  //   void init() {
+  //     add_input("point_cloud", {typeid(PointCollection)});
+  //     add_output("percentile_z", typeid(float));
+
+  //     add_param(ParamBoundedFloat(ground_percentile, 0, 1, "ground_percentile",  "Ground elevation percentile"));
+  //   }
+  //   void process();
+  // };
 
 }
