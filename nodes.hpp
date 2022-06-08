@@ -57,6 +57,12 @@ namespace geoflow::nodes::las {
       add_param(ParamPath(filepath, "filepath", "File path"));
     }
     void process();
+    bool parameters_valid() override {
+      if (manager.substitute_globals(filepath).empty()) 
+        return false;
+      else 
+        return true;
+    }
   };
 
   class LASVecWriterNode:public Node {
@@ -71,6 +77,12 @@ namespace geoflow::nodes::las {
       add_param(ParamPath(filepath, "filepath", "File path with stem"));
     }
     void process();
+    bool parameters_valid() override {
+      if (manager.substitute_globals(filepath).empty()) 
+        return false;
+      else 
+        return true;
+    }
   };
 
   class PointCloudClassSplitNode:public Node {
