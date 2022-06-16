@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.14)
-project (io-las VERSION 0.0.1)
+cmake_minimum_required(VERSION 3.21)
+project (io-las VERSION 0.2.0)
 
 if(PROJECT_IS_TOP_LEVEL)
   find_package(geoflow REQUIRED)
