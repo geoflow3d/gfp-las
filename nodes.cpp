@@ -46,6 +46,42 @@ std::vector<std::string> split_string(const std::string& s, std::string delimite
   parts.push_back(s.substr(last));
   return parts;
 }
+void getOgcWkt(LASheader* lasheader, std::string& wkt) {
+  for (int i = 0; i < (int)lasheader->number_of_variable_length_records; i++)
+  {
+      if (lasheader->vlrs[i].record_id == 2111) // OGC MATH TRANSFORM WKT
+      {
+        std::cout << "Found and ignored: OGC MATH TRANSFORM WKT\n";
+      }
+      else if (lasheader->vlrs[i].record_id == 2112) // OGC COORDINATE SYSTEM WKT
+      {
+        std::cout << "Found: OGC COORDINATE SYSTEM WKT\n";
+        wkt = (char *)(lasheader->vlrs[i].data);
+      }
+      else if (lasheader->vlrs[i].record_id == 34735) // GeoKeyDirectoryTag
+      {
+        std::cout << "Found and ignored: GeoKeyDirectoryTag\n";
+      }
+  }
+
+  for (int i = 0; i < (int)lasheader->number_of_extended_variable_length_records; i++)
+  {
+    if (strcmp(lasheader->evlrs[i].user_id, "LASF_Projection") == 0)
+    {
+      if (lasheader->evlrs[i].record_id == 2111) // OGC MATH TRANSFORM WKT
+      {
+        std::cout << "Found and ignored: OGC MATH TRANSFORM WKT\n";
+
+      }
+      else if (lasheader->evlrs[i].record_id == 2112) // OGC COORDINATE SYSTEM WKT
+      {
+        std::cout << "Found: OGC COORDINATE SYSTEM WKT\n";
+        wkt = (char *)(lasheader->evlrs[i].data);
+      }
+    }
+  }
+  std::cout << wkt << std::endl;
+}
 
 void LASLoaderNode::process(){
 
@@ -62,18 +98,18 @@ void LASLoaderNode::process(){
   if (!lasreader)
     return;
 
+  std::cout << "\nAttemting to find OGC CRS WKT... \n";
+  std::string wkt;
+  getOgcWkt(&lasreader->header, wkt);
+  manager.set_fwd_crs_transform(wkt.c_str());
+
   // geometry.bounding_box.set(
   //   {float(lasreader->get_min_x()), float(lasreader->get_min_y()), float(lasreader->get_min_z())},
   //   {float(lasreader->get_max_x()), float(lasreader->get_max_y()), float(lasreader->get_max_z())}
   // );
-  bool found_offset = manager.data_offset.has_value();
 
   size_t i=0;
   while (lasreader->read_point()) {
-    if (!found_offset) {
-      manager.data_offset = {lasreader->point.get_x(), lasreader->point.get_y(), lasreader->point.get_z()};
-      found_offset = true;
-    }
     ++i;
     if (do_class_filter && lasreader->point.get_classification() != filter_class) {
       continue;
@@ -93,13 +129,16 @@ void LASLoaderNode::process(){
       float(lasreader->point.get_G())/65535,
       float(lasreader->point.get_B())/65535
     });
-    points.push_back({
-      float(lasreader->point.get_x() - (*manager.data_offset)[0]), 
-      float(lasreader->point.get_y() - (*manager.data_offset)[1]), 
-      float(lasreader->point.get_z() - (*manager.data_offset)[2])}
+    points.push_back(
+      manager.coord_transform_fwd(
+        lasreader->point.get_x(), 
+        lasreader->point.get_y(), 
+        lasreader->point.get_z()
+      )
     );
     order.push_back(float(i)/1000);
   }
+  manager.clear_fwd_crs_transform();
   lasreader->close();
   delete lasreader;  
 
@@ -135,7 +174,7 @@ void LASVecLoaderNode::process(){
   }
 
   std::sort(lasfiles.begin(), lasfiles.end());
-  bool found_offset = manager.data_offset.has_value();
+
   PointCollection points;
   for(auto& lasfile : lasfiles) {
     LASreadOpener lasreadopener;
@@ -143,13 +182,14 @@ void LASVecLoaderNode::process(){
     LASreader* lasreader = lasreadopener.open();
     if (!lasreader)
       return;
+    
+    std::cout << "\nAttemting to find OGC CRS WKT... \n";
+    std::string wkt;
+    getOgcWkt(&lasreader->header, wkt);
+    manager.set_fwd_crs_transform(wkt.c_str());
 
     size_t i=0;
     while (lasreader->read_point()) {
-      if (!found_offset) {
-        manager.data_offset = {lasreader->point.get_x(), lasreader->point.get_y(), lasreader->point.get_z()};
-        found_offset = true;
-      }
       if (do_class_filter && lasreader->point.get_classification() != filter_class) {
         continue;
       }
@@ -158,12 +198,15 @@ void LASVecLoaderNode::process(){
           continue;
         }
       }
-      points.push_back({
-        float(lasreader->point.get_x() - (*manager.data_offset)[0]), 
-        float(lasreader->point.get_y() - (*manager.data_offset)[1]), 
-        float(lasreader->point.get_z() - (*manager.data_offset)[2])}
+      points.push_back(
+        manager.coord_transform_fwd(
+          lasreader->point.get_x(), 
+          lasreader->point.get_y(), 
+          lasreader->point.get_z()
+        )
       );
     }
+    manager.clear_fwd_crs_transform();
     lasreader->close();
     delete lasreader;
     if (!merge_output) {
