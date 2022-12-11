@@ -61,6 +61,7 @@ namespace geoflow::nodes::las {
 
   class LASWriterNode:public Node {
     std::string filepath = "";
+    std::string output_crs = "";
     public:
     using Node::Node;
     void init() {
@@ -70,6 +71,7 @@ namespace geoflow::nodes::las {
       // add_poly_input("attributes", {typeid(bool), typeid(int), typeid(float), typeid(std::string), typeid(Date), typeid(Time), typeid(DateTime)});
 
       add_param(ParamPath(filepath, "filepath", "File path"));
+      add_param(ParamString(output_crs, "output_crs", "Output CRS"));
     }
     void process();
     bool parameters_valid() override {
@@ -82,6 +84,7 @@ namespace geoflow::nodes::las {
 
   class LASVecWriterNode:public Node {
     std::string filepath = "";
+    std::string output_crs = "";
     public:
     using Node::Node;
     void init() {
@@ -90,6 +93,7 @@ namespace geoflow::nodes::las {
       // add_output("intensity", typeid(vec1f));
       
       add_param(ParamPath(filepath, "filepath", "File path with stem"));
+      add_param(ParamString(output_crs, "output_crs", "Output CRS"));
     }
     void process();
     bool parameters_valid() override {

@@ -217,7 +217,7 @@ void LASVecLoaderNode::process(){
   if (merge_output) point_clouds.push_back(points);
 }
 
-void write_point_cloud_collection(const PointCollection& point_cloud, std::string path, const std::array<double,3> offset) {
+void write_point_cloud_collection(const PointCollection& point_cloud, std::string path, NodeManager& manager) {
   LASwriteOpener laswriteopener;
   laswriteopener.set_file_name(path.c_str());
 
@@ -230,6 +230,9 @@ void write_point_cloud_collection(const PointCollection& point_cloud, std::strin
   lasheader.z_offset = 0.0;
   lasheader.point_data_format = 0;
   lasheader.point_data_record_length = 20;
+  
+  auto crs_wkt = manager.get_rev_crs_wkt();
+  lasheader.set_geo_ogc_wkt(crs_wkt.size(), crs_wkt.c_str());
 
   LASpoint laspoint;
   laspoint.init(&lasheader, lasheader.point_data_format, lasheader.point_data_record_length, 0);
@@ -265,10 +268,11 @@ void write_point_cloud_collection(const PointCollection& point_cloud, std::strin
   }
 
   size_t i=0;
-  for (auto& p : point_cloud) {
-    laspoint.set_x(p[0] + offset[0]);
-    laspoint.set_y(p[1] + offset[1]);
-    laspoint.set_z(p[2] + offset[2]);
+  for (auto& p_ : point_cloud) {
+    auto p = manager.coord_transform_rev(p_);
+    laspoint.set_x(p[0]);
+    laspoint.set_y(p[1]);
+    laspoint.set_z(p[2]);
     if (classification) {
       laspoint.set_classification((*classification)[i]);
     }
@@ -297,18 +301,23 @@ void LASWriterNode::process(){
   auto input_geom = input("point_clouds");
   auto point_cloud = input_geom.get<PointCollection>();
 
+  auto crs = manager.substitute_globals(output_crs);
+  manager.set_rev_crs_transform(crs.c_str(), true);
+
   // get attributevalue for filename
   const gfSingleFeatureOutputTerminal* id_term;
 
   auto fname = manager.substitute_globals(filepath);
   
   fs::create_directories(fs::path(fname).parent_path());
-  write_point_cloud_collection(point_cloud, fname, *manager.data_offset);
+  write_point_cloud_collection(point_cloud, fname, manager);
 }
 
 void LASVecWriterNode::process(){
 
   auto point_clouds = vector_input("point_clouds");
+  auto crs = manager.substitute_globals(output_crs);
+  manager.set_rev_crs_transform(crs.c_str(), true);
 
   for (size_t i=0; i<point_clouds.size(); ++i) {
     std::stringstream filename;
@@ -316,7 +325,7 @@ void LASVecWriterNode::process(){
     write_point_cloud_collection(
       point_clouds.get<PointCollection>(i), 
       filename.str(), 
-      *manager.data_offset
+      manager
     );
   }
 }
