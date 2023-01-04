@@ -228,11 +228,19 @@ void write_point_cloud_collection(const PointCollection& point_cloud, std::strin
   lasheader.x_offset = 0.0;
   lasheader.y_offset = 0.0;
   lasheader.z_offset = 0.0;
+
+  // lasheader.version_major = 1;
+  // lasheader.version_minor = 4;
+  // lasheader.header_size = 375;
   lasheader.point_data_format = 0;
   lasheader.point_data_record_length = 20;
   
   auto crs_wkt = manager.get_rev_crs_wkt();
+  // std::cout << crs_wkt << std::endl;
+  // std::cout << crs_wkt.size() << std::endl;
+  // std::cout << strlen(crs_wkt.c_str()) << std::endl;
   lasheader.set_geo_ogc_wkt(crs_wkt.size(), crs_wkt.c_str());
+  // lasheader.set_global_encoding_bit(LAS_TOOLS_GLOBAL_ENCODING_BIT_OGC_WKT_CRS);
 
   LASpoint laspoint;
   laspoint.init(&lasheader, lasheader.point_data_format, lasheader.point_data_record_length, 0);
