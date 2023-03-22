@@ -99,9 +99,11 @@ void LASLoaderNode::process(){
     return;
 
   std::cout << "\nAttemting to find OGC CRS WKT... \n";
-  std::string wkt;
+  std::string wkt = manager.substitute_globals(wkt_);
   getOgcWkt(&lasreader->header, wkt);
-  manager.set_fwd_crs_transform(wkt.c_str());
+  if (wkt.size()!=0){
+    manager.set_fwd_crs_transform(wkt.c_str());
+  }
 
   // geometry.bounding_box.set(
   //   {float(lasreader->get_min_x()), float(lasreader->get_min_y()), float(lasreader->get_min_z())},

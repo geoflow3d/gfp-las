@@ -22,6 +22,7 @@ namespace geoflow::nodes::las {
     int thin_nth=5;
     int filter_class = 6;
     bool do_class_filter = true;
+    std::string wkt_="";
     public:
     using Node::Node;
     void init() {
@@ -35,6 +36,7 @@ namespace geoflow::nodes::las {
       add_param(ParamBoundedInt(thin_nth, 0, 100, "thin_nth", "Thin factor"));
       add_param(ParamBoundedInt(filter_class, 0, 100, "filter_class", "Filter class"));
       add_param(ParamBool(do_class_filter, "do_filter", "Do class filter"));
+      add_param(ParamString(wkt_, "wkt",  "Override CRS"));
     }
     void process();
   };
